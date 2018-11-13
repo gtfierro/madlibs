@@ -34,27 +34,23 @@ img {
     float: left;
     padding-right: 40px;
 }
-
-.split {
-  height: 100%;
-  width: 50%;
-  position: fixed;
-  z-index: 1;
-  top: 100px;
-  overflow-x: hidden;
-}
-
-.left {
-  left: 30;
-  background-color: #eee;
-  margin-right: 30px;
-}
-
 pre {
     background-color: #eee;
+}
+
+
+.left {
+    width: 450px;
+    display: inline-block;
+}
+
+.right {
+    width: 450px;
+    display: inline-block;
 }
 
 .footer {
     color: #888;
     width: 100%;
 }
+

@@ -1,0 +1,126 @@
+<!-- sneaky sneaky looking at the source code are you? -->
+
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Madlib API</title>
+        <link rel="stylesheet" href="/static/style.css" />
+    </head>
+    <body>
+        <h1>Madlib API</h1>
+
+        This is a super simple API to execute Madlibs.
+
+        <ul>
+            <li><a href="#apinew"><code>/api/new</code></a></li>
+            <li><a href="#apinext"><code>/api/next</code></a></li>
+            <li><a href="#apianswer"><code>/api/answer</code></a></li>
+            <li><a href="#apiskip"><code>/api/skip</code></a></li>
+        </ul>
+
+        <hr />
+
+		<div>
+            <h3 id="apinew"><code>GET /api/new</code></h3>
+            <p>
+                This retrieves a new API Key which should be used in all future API calls.
+                Each API key can have <b>one</b> outstanding Madlib, so each new client should
+                start with this API endpoint to get an API key.
+            </p>
+            <p>
+                Request:
+                <pre><code>&lt;empty body&gt;</code></pre>
+            </p>
+            <p>
+                Returns:
+<pre><code>{
+    "key": "lWbHTRAeABZ5OctmlNLEIg=="
+}
+</code></pre>
+            </p>
+		</div>
+
+        <hr />
+
+        <div>
+            <h3 id="apinext"><code>POST /api/next</code></h3>
+            <p>
+                A client POSTs to this API endpoint with their key. The response is a JSON
+                object notifiying them of the prompt for the next part of the Madlib (e.g. "noun", "verb ending in 'ing'") <b>or</b> the finished Madlib. Check the <code>done</code> portion of the response to check if there is more to the Madlib. Subsequent calls to <code>/api/next</code> return the same prompt until that prompt is answered by a POST to <code>/api/answer</code> (see documentation <a href="#apianswer">below</a>).
+            </p>
+            <p>
+                Request:
+<pre><code>{
+    "key": "lWbHTRAeABZ5OctmlNLEIg=="
+}
+</code></pre>
+            </p>
+            <p>
+                Response (if Madlib in progress):
+<pre><code>{
+    "key": "lWbHTRAeABZ5OctmlNLEIg==",
+    "title": "My sample madlib",
+    "prompt": "noun",
+    "done": false
+}
+</code></pre>
+            </p>
+            <p>
+                Response (if Madlib is finished):
+<pre><code>{
+    "key": "lWbHTRAeABZ5OctmlNLEIg==",
+    "title": "My sample madlib",
+    "done": true,
+    "madlib": "My favorite programming language is Python because..."
+}
+</code></pre>
+            </p>
+        </div>
+
+        <hr />
+
+        <div>
+            <h3 id="apianswer"><code>POST /api/answer</code></h3>
+            <p>
+                A client POSTs to this API endpoint with their key and the answer to the most recent Madlib prompt, which is given by a POST to <code>/api/answer</code> (see <a href="#apinext">above</a>).
+            </p>
+            <p>
+                Request:
+<pre><code>{
+    "key": "lWbHTRAeABZ5OctmlNLEIg==",
+    "answer": "dog"
+}
+</code></pre>
+            </p>
+            <p>
+                Response:
+                <pre><code>&lt;empty body&gt;</code></pre>
+            </p>
+        </div>
+
+        <div>
+            <h3 id="apiskip"><code>POST /api/skip</code></h3>
+            <p>
+                A client POSTs to this API endpoint with their key in order to get a new Madlib. A client with an API key can have at most one outstanding Madlib they are answering. A POST to <code>/api/skip</code> will reset the current Madlib and start a new random Madlib. The first prompt, and title, to this new Madlib is given by a POST to <code>/api/next</code> (<a href="#apinext">doc</a>) with the client's API key.
+            </p>
+            <p>
+                Request:
+<pre><code>{
+    "key": "lWbHTRAeABZ5OctmlNLEIg=="
+}
+</code></pre>
+            </p>
+            <p>
+                Response:
+                <pre><code>&lt;empty body&gt;</code></pre>
+            </p>
+        </div>
+
+    <hr />
+    <div class="footer">
+    Hey
+    </div>
+
+    </body>
+</html>

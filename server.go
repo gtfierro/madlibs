@@ -57,6 +57,7 @@ func (srv *MadlibServer) New(w http.ResponseWriter, r *http.Request) {
 	var b = make([]byte, 16)
 	n, err := rand.Read(b)
 	if n != 16 || err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -66,6 +67,7 @@ func (srv *MadlibServer) New(w http.ResponseWriter, r *http.Request) {
 	srv.ongoing[key], err = srv.madlibs[rand.Intn(len(srv.madlibs))].NewMadlib()
 	srv.Unlock()
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -73,6 +75,8 @@ func (srv *MadlibServer) New(w http.ResponseWriter, r *http.Request) {
 	resp := KeyResponse{
 		Key: key,
 	}
+	log.Printf("Creating new key %s for client %s", key, r.RemoteAddr)
+	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
 	enc.Encode(resp)
 	return
@@ -84,14 +88,17 @@ func (srv *MadlibServer) Next(w http.ResponseWriter, r *http.Request) {
 	var nextreq = new(NextRequest)
 	err := dec.Decode(nextreq)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), 400)
 		return
 	}
+	log.Printf("Fetching next for key %s from client %s", nextreq.Key, r.RemoteAddr)
 
 	srv.RLock()
 	madlib, found := srv.ongoing[nextreq.Key]
 	srv.RUnlock()
 	if !found {
+		log.Println("no key found")
 		http.Error(w, fmt.Sprintf("No key '%s' found. Get another one by GETting /new", nextreq.Key), 500)
 		return
 	}
@@ -101,6 +108,7 @@ func (srv *MadlibServer) Next(w http.ResponseWriter, r *http.Request) {
 		Done:  !madlib.HasNextPrompt(),
 		Title: madlib.Title,
 	}
+	log.Printf("Key %s from client %s: %v", nextreq.Key, r.RemoteAddr, resp)
 
 	if resp.Done {
 		resp.Madlib = madlib.Finish()
@@ -112,6 +120,7 @@ func (srv *MadlibServer) Next(w http.ResponseWriter, r *http.Request) {
 		}
 		srv.Unlock()
 		if err != nil {
+			log.Println(err)
 			http.Error(w, err.Error(), 400)
 			return
 		}
@@ -119,6 +128,7 @@ func (srv *MadlibServer) Next(w http.ResponseWriter, r *http.Request) {
 	} else {
 		resp.Prompt = madlib.NextPrompt()
 	}
+	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
 	enc.Encode(resp)
 	return
@@ -130,14 +140,17 @@ func (srv *MadlibServer) Answer(w http.ResponseWriter, r *http.Request) {
 	var ansreq = new(AnswerRequest)
 	err := dec.Decode(ansreq)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), 400)
 		return
 	}
 
+	log.Printf("Submitting answer %s for key %s from client %s", ansreq.Answer, ansreq.Key, r.RemoteAddr)
 	srv.RLock()
 	madlib, found := srv.ongoing[ansreq.Key]
 	srv.RUnlock()
 	if !found {
+		log.Println("no key found")
 		http.Error(w, fmt.Sprintf("No key '%s' found. Get another one by GETting /new", ansreq.Key), 500)
 		return
 	}
@@ -152,10 +165,12 @@ func (srv *MadlibServer) Skip(w http.ResponseWriter, r *http.Request) {
 	var ansreq = new(NextRequest)
 	err := dec.Decode(ansreq)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), 400)
 		return
 	}
 
+	log.Printf("Skipping madlib for key %s from client %s", ansreq.Key, r.RemoteAddr)
 	srv.Lock()
 	_, found := srv.ongoing[ansreq.Key]
 	if found {
@@ -163,10 +178,12 @@ func (srv *MadlibServer) Skip(w http.ResponseWriter, r *http.Request) {
 	}
 	srv.Unlock()
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), 400)
 		return
 	}
 	if !found {
+		log.Println(err)
 		http.Error(w, fmt.Sprintf("No key '%s' found. Get another one by GETting /new", ansreq.Key), 500)
 		return
 	}

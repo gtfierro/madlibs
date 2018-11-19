@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/base64"
+	"time"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -66,6 +67,13 @@ func (srv *MadlibServer) New(w http.ResponseWriter, r *http.Request) {
 	srv.Lock()
 	srv.ongoing[key], err = srv.madlibs[rand.Intn(len(srv.madlibs))].NewMadlib()
 	srv.Unlock()
+	time.AfterFunc(10*time.Minute, func() {
+		// delete key after 10 min
+		log.Printf("Deleting key %s", key)
+		srv.Lock()
+		defer srv.Unlock()
+		delete(srv.ongoing,key)
+	})
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), 500)
